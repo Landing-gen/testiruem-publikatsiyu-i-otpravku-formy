@@ -1922,6 +1922,42 @@ anchorLinks.forEach((link) => {
   if (form.__contactSubmitBound === true) return;
   form.__contactSubmitBound = true;
 
+  function getLocale() {
+    var raw = String(document.documentElement.getAttribute('lang') || document.body.getAttribute('data-lang') || 'ru').trim().toLowerCase();
+    if (raw.indexOf('he') === 0) return 'he';
+    if (raw.indexOf('en') === 0) return 'en';
+    return 'ru';
+  }
+
+  var FORM_STRINGS = {
+    ru: {
+      sending: 'Отправляем...',
+      success: 'Спасибо! Заявка отправлена.',
+      errorGeneric: 'Не удалось отправить заявку.',
+      errorValidation: 'Введите все обязательные поля корректно.',
+      errorNoProject: 'Не удалось определить проект для сохранения заявки.'
+    },
+    en: {
+      sending: 'Sending...',
+      success: 'Thank you! Your request has been sent.',
+      errorGeneric: 'Failed to send the request.',
+      errorValidation: 'Please fill in all required fields correctly.',
+      errorNoProject: 'Could not determine project for this submission.'
+    },
+    he: {
+      sending: 'שולח...',
+      success: 'תודה! הפנייה נשלחה בהצלחה.',
+      errorGeneric: 'שליחה נכשלה.',
+      errorValidation: 'נא למלא את כל שדות החובה כראוי.',
+      errorNoProject: 'לא ניתן לזהות את הפרויקט.'
+    }
+  };
+
+  function t(key) {
+    var locale = getLocale();
+    return (FORM_STRINGS[locale] || FORM_STRINGS.ru)[key] || FORM_STRINGS.ru[key] || key;
+  }
+
   function getNamedValue(name) {
     var field = form.querySelector('[name="' + name + '"]');
     if (!field) return '';
@@ -1966,7 +2002,7 @@ anchorLinks.forEach((link) => {
     event.stopImmediatePropagation();
     statusEl.classList.remove('is-error', 'is-success', 'is-info');
     if (!form.checkValidity()) {
-      statusEl.textContent = 'Введите все обязательные поля корректно.';
+      statusEl.textContent = t('errorValidation');
       statusEl.classList.add('is-error');
       form.reportValidity();
       return;
@@ -1975,7 +2011,7 @@ anchorLinks.forEach((link) => {
     var projectId = String(document.body.getAttribute('data-project-id') || '').trim();
     var projectSlug = String(document.body.getAttribute('data-project-slug') || '').trim();
     if (!projectSlug) {
-      statusEl.textContent = 'Не удалось определить проект для сохранения заявки.';
+      statusEl.textContent = t('errorNoProject');
       statusEl.classList.add('is-error');
       return;
     }
@@ -1997,7 +2033,7 @@ anchorLinks.forEach((link) => {
 
     var submitButton = form.querySelector('button[type="submit"]');
     if (submitButton) submitButton.disabled = true;
-    statusEl.textContent = 'Отправляем...';
+    statusEl.textContent = t('sending');
     statusEl.classList.add('is-info');
 
     try {
@@ -2021,17 +2057,17 @@ anchorLinks.forEach((link) => {
       if (!response.ok) {
         var errorMessage = result && result.error && result.error.message
           ? result.error.message
-          : 'Не удалось отправить заявку.';
+          : t('errorGeneric');
         throw new Error(errorMessage);
       }
 
       statusEl.classList.remove('is-error', 'is-info');
-      statusEl.textContent = 'Спасибо! Заявка отправлена.';
+      statusEl.textContent = t('success');
       statusEl.classList.add('is-success');
       form.reset();
     } catch (error) {
       statusEl.classList.remove('is-success', 'is-info');
-      statusEl.textContent = error && error.message ? error.message : 'Не удалось отправить заявку.';
+      statusEl.textContent = error && error.message ? error.message : t('errorGeneric');
       statusEl.classList.add('is-error');
     } finally {
       if (submitButton) submitButton.disabled = false;
